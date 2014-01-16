@@ -1,6 +1,5 @@
 from django.contrib import admin
-from models import Hardware, Computer, UbuntuCertificationSite
+from models import Hardware, Computer
 
 admin.site.register(Hardware)
 admin.site.register(Computer)
-admin.site.register(UbuntuCertificationSite)

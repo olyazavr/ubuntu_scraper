@@ -37,7 +37,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'scraper',
-    'dynamic_scraper',
 )
 
 MIDDLEWARE_CLASSES = (
