@@ -26,16 +26,9 @@ class UbuntuSpider(CrawlSpider):
     	hardware['name'] = hardware.getName(sel)
     	hardware['computersCertifiedIn'] = hardware.computersIn(sel, "certified")
     	hardware['computersEnabledIn'] = hardware.computersIn(sel, "enabled")
-        # this is a bit redundant, but...
-    	hardware['certified'] = hardware.getCertification(hardware['computersCertifiedIn'], 
-                                                            hardware['computersEnabledIn'])
 
-
-        if hardware['name'] == "None None": # because seriously, what the hell is None None
-            return
-        if ("Unknown" in hardware['name'] or "None" in hardware['name']) and hardware['certified'] == "Unknown": # no information here
-            return
-        else: # save to Django!
+        if hardware['name'] != "None None": # because seriously, what the hell is None None
+            # save to Django!
             hardware.save()
 
     def parse_computer(self, response):

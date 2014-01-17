@@ -7,7 +7,6 @@ class Hardware(models.Model):
     name = models.CharField(max_length=200)
     computersCertifiedIn = SeparatedValuesField(max_length=1000, null=True)
     computersEnabledIn = SeparatedValuesField(max_length=1000, null=True)
-    certified = models.CharField(max_length=200)
 
     def __unicode__(self):
         return self.name
@@ -34,16 +33,6 @@ class HardwareItem(DjangoItem):
             part3 = text[text.find('a>') + 2 : text.find('</p')]
             computersList.append(part1+part2+part3)
         return computersList
-
-    ''' If there is at least one machine with this hardware that is certified, then the 
-        machine is certified. Otherwise, we check if it's enabled. If it's none of 
-        these, it's unknown.'''
-    def getCertification(self, certList, enabList):
-        if certList:
-            return "Certified"
-        if enabList:
-            return "Enabled"
-        return "Unknown"
 
 
 class Computer(models.Model):

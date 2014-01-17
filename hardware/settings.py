@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'scraper',
+    'south',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -51,7 +52,6 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'hardware.urls'
 
 WSGI_APPLICATION = 'hardware.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
