@@ -62,23 +62,23 @@ class ComputerItem(DjangoItem):
 
     ''' Gets the name of the computer '''
     def getName(self, sel):
-        return sel.xpath('//p[@class="large"]/strong/text()').extract()
+        return sel.xpath('//p[@class="large"]/strong/text()').extract()[0]
 
     ''' Returns the cid of the computer. Not sure if this is a made up value 
         by ubuntu but it makes for a nice id.'''
     def getCid(self, sel):
         # cid is 123456-12345 format
-        return sel.xpath('//a[@class="btn"]/@href').re("\d+-\d+")
+        return sel.xpath('//a[@class="btn"]/@href').re("\d+-\d+")[0]
 
     ''' Returns whether the computer is Certified or Enabled'''
     def getCertification(self, sel):
         # title() makes the first letter uppercase for maximum prettiness
-        return sel.xpath('//div[@class="release"]').extract().title()
+        return sel.xpath('//div[@class="release"]').re("certified|enabled")[0].title()
 
     ''' Returns the Ubuntu version that works for this computer.'''
     def getVersion(self, sel):
         # version is 12.12(.12) format
-        return sel.xpath('//div[@class="release"]/h3/text()').re("\d+.\d+.?\d*")
+        return sel.xpath('//div[@class="release"]/h3/text()').re("\d+.\d+.?\d*")[0]
 
     ''' Gets the list of parts in this computer '''
     def getParts(self, sel):

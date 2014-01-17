@@ -7,14 +7,14 @@ class UbuntuSpider(CrawlSpider):
     name = "ubuntu_spider"
     allowed_domains = ['ubuntu.com']
     start_urls = [
-                    'http://www.ubuntu.com/certification/desktop/', # hardware catalog
-    				'http://www.ubuntu.com/certification/catalog/makes/' # computers
+                    'http://www.ubuntu.com/certification/catalog/makes/', # hardware catalog
+                    'http://www.ubuntu.com/certification/desktop/', # computers
     				]
     rules = [
     		Rule(SgmlLinkExtractor(allow=['/certification/catalog/make/\w+/'])), # list of hardware for a make
     		Rule(SgmlLinkExtractor(allow=['/certification/catalog/component/.+']), 'parse_hardware'), # particular hardware
             Rule(SgmlLinkExtractor(allow=['/certification/desktop/make/\w+/'])), # list of all computers for a make
-            Rule(SgmlLinkExtractor(allow=['/certification/hardware/\d+-\d+']), 'parse_computer') # particular computer
+            Rule(SgmlLinkExtractor(allow=['/certification/hardware/\d+-\d+/']), 'parse_computer') # particular computer
     		]
 
     def parse_hardware(self, response):
@@ -35,21 +35,21 @@ class UbuntuSpider(CrawlSpider):
     	print hardware['certified']
     	print '\n'
 
-	def parse_computer(self, response):
-		sel = Selector(response)
+    def parse_computer(self, response):
+        sel = Selector(response)
 
-		# make a computer item and populate its fields
-		computer = ComputerItem()
-		computer['url'] = response.url
-		computer['name'] = computer.getName(sel)
-		computer['cid'] = computer.getCid(sel)
-		computer['certified'] = computer.getCertification(sel)
-		computer['version'] = computer.version(sel)
-		computer['parts'] = computer.getParts(sel)
+        # make a computer item and populate its fields
+        computer = ComputerItem()
+        computer['url'] = response.url
+        computer['name'] = computer.getName(sel)
+        computer['cid'] = computer.getCid(sel)
+        computer['certified'] = computer.getCertification(sel)
+        computer['version'] = computer.getVersion(sel)
+        computer['parts'] = computer.getParts(sel)
 
-		print computer['url']
-		print computer['name']
-		print computer['certified']
-		print computer['version']
-		print computer['parts']
-		print '\n'
+        print computer['url']
+        print computer['name']
+        print computer['certified']
+        print computer['version']
+        print computer['parts']
+        print '\n'
