@@ -1,20 +1,10 @@
+from scrapy.exceptions import DropItem
 
+#not using this atm primarily because I have no idea how to
 class UbuntuScraperPipeline(object):
-    # def process_item(self, item, spider):
-    #     try:
-    #         item['site'] = spider.ref_object
-
-    #         checker_rt = SchedulerRuntime(runtime_type='C')
-    #         checker_rt.save()
-    #         item['checker_runtime'] = checker_rt
-
-    #         item.save()
-    #         spider.action_successful = True
-    #         spider.log("Item saved.", log.INFO)
-
-    #     except IntegrityError, e:
-    #         spider.log(str(e), log.ERROR)
-    #         raise DropItem("Missing attribute.")
-
-    #    return item
-    pass
+    def process_item(self, item, spider):
+        if item['name'] == "None None":
+            raise DropItem("Name is None None. Dropping item.")
+        else:
+            item.save()
+            return item

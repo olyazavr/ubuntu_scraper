@@ -9,6 +9,6 @@ SPIDER_MODULES = ['scraper.ubuntu_scraper',]
 USER_AGENT = '%s/%s' % (BOT_NAME, '1.0')
 NEWSPIDER_MODULE = 'scraper.ubuntu_scraper'
 
-ITEM_PIPELINES = [
-    #'scraper.ubuntu_scraper.pipelines.UbuntuScraperPipeline',
-]
+ITEM_PIPELINES = {
+    #'scraper.ubuntu_scraper.pipelines.UbuntuScraperPipeline' : 300,
+}

@@ -10,7 +10,7 @@ class UbuntuSpider(CrawlSpider):
                     'http://www.ubuntu.com/certification/catalog/makes/', # hardware catalog
                     'http://www.ubuntu.com/certification/desktop/', # computers
     				]
-    rules = [
+    rules = [ # these are where the spider is allowed to crawl (including diff page #s of these pages)
     		Rule(SgmlLinkExtractor(allow=['/certification/catalog/make/\w+/'])), # list of hardware for a make
     		Rule(SgmlLinkExtractor(allow=['/certification/catalog/component/.+']), 'parse_hardware'), # particular hardware
             Rule(SgmlLinkExtractor(allow=['/certification/desktop/make/\w+/'])), # list of all computers for a make
@@ -26,14 +26,17 @@ class UbuntuSpider(CrawlSpider):
     	hardware['name'] = hardware.getName(sel)
     	hardware['computersCertifiedIn'] = hardware.computersIn(sel, "certified")
     	hardware['computersEnabledIn'] = hardware.computersIn(sel, "enabled")
-    	hardware['certified'] = hardware.getCertification(hardware['computersCertifiedIn'], hardware['computersEnabledIn'])
+        # this is a bit redundant, but...
+    	hardware['certified'] = hardware.getCertification(hardware['computersCertifiedIn'], 
+                                                            hardware['computersEnabledIn'])
 
-    	print hardware['url']
-    	print hardware['name']
-    	print hardware['computersCertifiedIn']
-    	print hardware['computersEnabledIn']
-    	print hardware['certified']
-    	print '\n'
+
+        if hardware['name'] == "None None": # because seriously, what the hell is None None
+            return
+        if ("Unknown" in hardware['name'] or "None" in hardware['name']) and hardware['certified'] == "Unknown": # no information here
+            return
+        else: # save to Django!
+            hardware.save()
 
     def parse_computer(self, response):
         sel = Selector(response)
@@ -47,9 +50,5 @@ class UbuntuSpider(CrawlSpider):
         computer['version'] = computer.getVersion(sel)
         computer['parts'] = computer.getParts(sel)
 
-        print computer['url']
-        print computer['name']
-        print computer['certified']
-        print computer['version']
-        print computer['parts']
-        print '\n'
+        # save to Django!
+        computer.save()

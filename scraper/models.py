@@ -5,8 +5,8 @@ from separatedvaluesfield.models import SeparatedValuesField
 class Hardware(models.Model):
     url = models.URLField()
     name = models.CharField(max_length=200)
-    computersCertifiedIn = SeparatedValuesField(max_length=1000)
-    computersEnabledIn = SeparatedValuesField(max_length=1000)
+    computersCertifiedIn = SeparatedValuesField(max_length=1000, null=True)
+    computersEnabledIn = SeparatedValuesField(max_length=1000, null=True)
     certified = models.CharField(max_length=200)
 
     def __unicode__(self):
@@ -52,7 +52,7 @@ class Computer(models.Model):
     cid = models.CharField(max_length=200)
     certified = models.CharField(max_length=200)
     version = models.CharField(max_length=200)
-    parts = SeparatedValuesField(max_length=1000)
+    parts = SeparatedValuesField(max_length=1000, null=True)
 
     def __unicode__(self):
         return self.name
