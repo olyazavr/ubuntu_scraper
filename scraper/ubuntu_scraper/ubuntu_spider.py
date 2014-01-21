@@ -1,4 +1,4 @@
-from scraper.models import HardwareItem, ComputerItem
+from scraper.ubuntu_scraper.items import HardwareItem, ComputerItem
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -26,6 +26,7 @@ class UbuntuSpider(CrawlSpider):
     	hardware['name'] = hardware.getName(sel)
     	hardware['computersCertifiedIn'] = hardware.computersIn(sel, "certified")
     	hardware['computersEnabledIn'] = hardware.computersIn(sel, "enabled")
+        hardware['source'] = 'Ubuntu'
 
         if hardware['name'] != "None None": # because seriously, what the hell is None None
             # save to Django!
@@ -41,6 +42,7 @@ class UbuntuSpider(CrawlSpider):
         computer['certified'] = computer.getCertification(sel)
         computer['version'] = computer.getVersion(sel)
         computer['parts'] = computer.getParts(sel)
+        computer['source'] = 'Ubuntu'
 
         # save to Django!
         computer.save()

@@ -13,8 +13,8 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('url', self.gf('django.db.models.fields.URLField')(max_length=200)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
-            ('computersCertifiedIn', self.gf('separatedvaluesfield.models.SeparatedValuesField')(max_length=1000, null=True)),
-            ('computersEnabledIn', self.gf('separatedvaluesfield.models.SeparatedValuesField')(max_length=1000, null=True)),
+            ('computersCertifiedIn', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True)),
+            ('computersEnabledIn', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True)),
         ))
         db.send_create_signal(u'scraper', ['Hardware'])
 
@@ -23,10 +23,9 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('url', self.gf('django.db.models.fields.URLField')(max_length=200)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
-            ('cid', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('certified', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('version', self.gf('django.db.models.fields.CharField')(max_length=200)),
-            ('parts', self.gf('separatedvaluesfield.models.SeparatedValuesField')(max_length=1000, null=True)),
+            ('parts', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True)),
         ))
         db.send_create_signal(u'scraper', ['Computer'])
 
@@ -43,17 +42,16 @@ class Migration(SchemaMigration):
         u'scraper.computer': {
             'Meta': {'object_name': 'Computer'},
             'certified': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'cid': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'parts': ('separatedvaluesfield.models.SeparatedValuesField', [], {'max_length': '1000', 'null': 'True'}),
+            'parts': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
             'version': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
         u'scraper.hardware': {
             'Meta': {'object_name': 'Hardware'},
-            'computersCertifiedIn': ('separatedvaluesfield.models.SeparatedValuesField', [], {'max_length': '1000', 'null': 'True'}),
-            'computersEnabledIn': ('separatedvaluesfield.models.SeparatedValuesField', [], {'max_length': '1000', 'null': 'True'}),
+            'computersCertifiedIn': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True'}),
+            'computersEnabledIn': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '200'})
