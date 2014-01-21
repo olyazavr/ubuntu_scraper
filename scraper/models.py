@@ -11,6 +11,20 @@ class Hardware(models.Model):
     def __unicode__(self):
         return self.name
 
+    ''' Is it certified in at least one computer; if not, is it enabled in at least
+        one computer. Otherwise, it is unknown. '''
+    def certified(self):
+        if self.computersCertifiedIn:
+            return "Certified"
+        if self.computersEnabledIn:
+            return "Enabled"
+        return "Unknown"
+
+    ''' Get the brand from the first word of the name (lame, but looks nice)'''
+    def brand(self):
+        return self.name.split(" ")[0]
+    brand.admin_order_field = 'name'
+
 
 class HardwareItem(DjangoItem):
     django_model = Hardware
@@ -45,6 +59,11 @@ class Computer(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    ''' Get the brand from the first word of the name (lame, but looks nice)'''
+    def brand(self):
+        return self.name.split(" ")[0]
+    brand.admin_order_field = 'name'
 
 class ComputerItem(DjangoItem):
     django_model = Computer
