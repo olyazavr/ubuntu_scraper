@@ -1,0 +1,13 @@
+<h1>{{ computer.name }}</h1>
+
+<ul>
+        <li>Certification: {{ computer.certified }}</li>
+        <li>Version: {{ computer.version }}</li>
+        <li>Parts:
+        	<ul>
+        		{% for part in computer.splitParts %}
+        			<li> {{ part }}</li>
+    			{% endfor %}
+        	</ul>
+        </li>
+</ul>

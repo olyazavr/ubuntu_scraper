@@ -38,7 +38,6 @@ class UbuntuSpider(CrawlSpider):
         computer = ComputerItem()
         computer['url'] = response.url
         computer['name'] = computer.getName(sel)
-        computer['cid'] = computer.getCid(sel)
         computer['certified'] = computer.getCertification(sel)
         computer['version'] = computer.getVersion(sel)
         computer['parts'] = computer.getParts(sel)

@@ -2,11 +2,11 @@ from django.contrib import admin
 from models import Hardware, Computer
 
 class HardwareAdmin(admin.ModelAdmin):
-	list_display = ('name', 'brand', 'certified')
+	list_display = ('name', 'brand', 'certified', 'id')
 	search_fields = ['name']
 
 class ComputerAdmin(admin.ModelAdmin):
-	list_display = ('name', 'brand', 'cid', 'certified', 'version')
+	list_display = ('name', 'brand', 'certified', 'version', 'id')
 	search_fields = ['name']
 	list_filter = ['version', 'certified']
 

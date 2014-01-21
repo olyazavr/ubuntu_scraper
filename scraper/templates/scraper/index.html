@@ -1,0 +1,26 @@
+<form action="/search/" method="get">
+          
+
+<label for="id_q">Search:</label>
+           <input id="id_q" name="q" type="text">
+           <input type="radio" name="type" value="hardware" checked>Hardware
+           <input type="radio" name="type" value="computer">Computer
+           <input type="submit" value="Submit">
+<br>
+{% if found_entries %}
+    <ul>
+    {% for entry in found_entries %}
+        <li>
+        	{% if type == 'hardware' %}
+        	<a href="{% url 'hardware' entry.id %}">{{ entry.name }}</a>
+
+        	{% else %}
+        	<a href="{% url 'computer' entry.id %}">{{ entry.name }}</a>
+        	{% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No results were found.</p>
+{% endif %}
+</form>

@@ -1,0 +1,23 @@
+<h1>{{ hardware.name }}</h1>
+
+<ul>
+		<li>Certification: {{ hardware.certified }}</li>
+        <li>Computers Certified In:
+        	{% if hardware.splitCertComp %}
+        	<ul>
+        		{% for comp in hardware.splitCertComp %}
+        			<li> {{ comp }}</li>
+    			{% endfor %}
+        	</ul>
+        	{% endif %}
+        </li>
+        <li>Computers Enabled In: 
+        	{% if hardware.splitEnabComp %}
+        	<ul>
+        		{% for comp in hardware.splitEnabComp %}
+        			<li> {{ comp }}</li>
+    			{% endfor %}
+        	</ul>
+        	{% endif %}
+        </li>
+</ul>

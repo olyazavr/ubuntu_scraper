@@ -1,12 +1,11 @@
 from django.db import models
 from scrapy.contrib.djangoitem import DjangoItem
-from separatedvaluesfield.models import SeparatedValuesField
 
 class Hardware(models.Model):
     url = models.URLField()
     name = models.CharField(max_length=200)
-    computersCertifiedIn = SeparatedValuesField(max_length=1000, null=True)
-    computersEnabledIn = SeparatedValuesField(max_length=1000, null=True)
+    computersCertifiedIn = models.CharField(max_length=2000, null=True)
+    computersEnabledIn = models.CharField(max_length=2000, null=True)
 
     def __unicode__(self):
         return self.name
@@ -24,6 +23,20 @@ class Hardware(models.Model):
     def brand(self):
         return self.name.split(" ")[0]
     brand.admin_order_field = 'name'
+
+    ''' Convert flattened string of computersCertifiedIn into list. Duplicate
+        because Django views cannot pass arguments into methods. '''
+    def splitCertComp(self):
+        if self.computersCertifiedIn:
+            return self.computersCertifiedIn.split(", ")
+        return ''
+
+    ''' Convert flattened string of computersEnabledIn into list. Duplicate
+        because Django views cannot pass arguments into methods. '''
+    def splitEnabComp(self):
+        if self.computersEnabledIn:
+            return self.computersEnabledIn.split(", ")
+        return ''
 
 
 class HardwareItem(DjangoItem):
@@ -46,16 +59,16 @@ class HardwareItem(DjangoItem):
             part2 = text[text.find('">') + 2 : text.find('</a')]
             part3 = text[text.find('a>') + 2 : text.find('</p')]
             computersList.append(part1+part2+part3)
-        return computersList
+        # flatten to comma separated string
+        return ', '.join([str(x) for x in computersList])
 
 
 class Computer(models.Model):
     url = models.URLField()
     name = models.CharField(max_length=200)
-    cid = models.CharField(max_length=200)
     certified = models.CharField(max_length=200)
     version = models.CharField(max_length=200)
-    parts = SeparatedValuesField(max_length=1000, null=True)
+    parts = models.CharField(max_length=2000, null=True)
 
     def __unicode__(self):
         return self.name
@@ -65,18 +78,18 @@ class Computer(models.Model):
         return self.name.split(" ")[0]
     brand.admin_order_field = 'name'
 
+    ''' Convert flattened string of parts into list '''
+    def splitParts(self):
+        if self.parts:
+            return self.parts.split(", ")
+        return ''
+
 class ComputerItem(DjangoItem):
     django_model = Computer
 
     ''' Gets the name of the computer '''
     def getName(self, sel):
         return sel.xpath('//p[@class="large"]/strong/text()').extract()[0]
-
-    ''' Returns the cid of the computer. Not sure if this is a made up value 
-        by ubuntu but it makes for a nice id.'''
-    def getCid(self, sel):
-        # cid is 123456-12345 format
-        return sel.xpath('//a[@class="btn"]/@href').re("\d+-\d+")[0]
 
     ''' Returns whether the computer is Certified or Enabled'''
     def getCertification(self, sel):
@@ -90,4 +103,6 @@ class ComputerItem(DjangoItem):
 
     ''' Gets the list of parts in this computer '''
     def getParts(self, sel):
-        return sel.xpath('//div[@id="hardware-overview"]/dl/dd/text()').extract()
+        partsList =  sel.xpath('//div[@id="hardware-overview"]/dl/dd/text()').extract()
+        # flatten to comma separated string
+        return ', '.join([str(x) for x in partsList])
