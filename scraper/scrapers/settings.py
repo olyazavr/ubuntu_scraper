@@ -5,9 +5,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hardware.settings")
 
 BOT_NAME = 'scraper'
 
-SPIDER_MODULES = ['scraper.ubuntu_scraper',]
+SPIDER_MODULES = ['scraper.scrapers.spiders',]
 USER_AGENT = '%s/%s' % (BOT_NAME, '1.0')
-NEWSPIDER_MODULE = 'scraper.ubuntu_scraper'
+NEWSPIDER_MODULE = 'scraper.scrapers.spiders'
 
 ITEM_PIPELINES = {
     #'scraper.ubuntu_scraper.pipelines.UbuntuScraperPipeline' : 300,
