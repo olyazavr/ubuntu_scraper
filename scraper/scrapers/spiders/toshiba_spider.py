@@ -7,6 +7,7 @@ from scrapy.http.request import Request
 from scraper.utils import parse_pdf
 import re
 import time
+import tempfile
 
 class ToshibaSpider(CrawlSpider):
     name = "toshiba_spider"
@@ -19,7 +20,7 @@ class ToshibaSpider(CrawlSpider):
     		]
 
     def parse_computer(self, response):
-        saveDir = '/home/olyazavr/Moka5/hardware/scraper/files' # change this!!
+        saveDir = tempfile.mkdtemp()
         sel = Selector(response)
 
         # make a computer item and populate its fields
