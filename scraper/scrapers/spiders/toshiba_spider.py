@@ -32,7 +32,7 @@ class ToshibaSpider(CrawlSpider):
         computer['source'] = 'Toshiba'
 
         # save to Django!
-        computer.save()
+        # computer.save()
 
     ''' Returns name of computer '''
     def getName(self, sel):
