@@ -43,7 +43,7 @@ class Computer(models.Model):
     name = models.CharField(max_length=200)
     certified = models.CharField(max_length=200)
     version = models.CharField(max_length=200)
-    parts = models.CharField(max_length=2000, null=True)
+    parts = models.CharField(max_length=2000000, null=True)
     source = models.CharField(max_length=200)
 
     def __unicode__(self):
