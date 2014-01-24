@@ -1,10 +1,10 @@
 from django.db import models
 
 class Hardware(models.Model):
-    url = models.URLField()
+    url = models.URLField(unique=True)
     name = models.CharField(max_length=200)
-    computersCertifiedIn = models.CharField(max_length=2000, null=True)
-    computersEnabledIn = models.CharField(max_length=2000, null=True)
+    computersCertifiedIn = models.TextField(null=True)
+    computersEnabledIn = models.TextField(null=True)
     source = models.CharField(max_length=200)
 
     def __unicode__(self):
@@ -39,11 +39,11 @@ class Hardware(models.Model):
         return ''
 
 class Computer(models.Model):
-    url = models.URLField()
+    url = models.URLField(unique=True)
     name = models.CharField(max_length=200)
     certified = models.CharField(max_length=200)
     version = models.CharField(max_length=200)
-    parts = models.CharField(max_length=2000000, null=True)
+    parts = models.TextField(null=True)
     source = models.CharField(max_length=200)
 
     def __unicode__(self):

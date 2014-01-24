@@ -1,4 +1,4 @@
-from ..items import HardwareItem, ComputerItem
+from ..items import Hardware, Computer
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -21,30 +21,35 @@ class UbuntuSpider(CrawlSpider):
     	sel = Selector(response)
 
     	# make a hardware item and populate its fields
-    	hardware = HardwareItem()
-    	hardware['url'] = response.url
-    	hardware['name'] = self.getName(sel)
-    	hardware['computersCertifiedIn'] = self.computersIn(sel, "certified")
-    	hardware['computersEnabledIn'] = self.computersIn(sel, "enabled")
-        hardware['source'] = 'Ubuntu'
+    	url = response.url
+    	name = self.getName(sel)
+    	computersCertifiedIn = self.computersIn(sel, "certified")
+    	computersEnabledIn = self.computersIn(sel, "enabled")
+        source = 'Ubuntu'
 
-        if hardware['name'] != "None None": # because seriously, what the hell is None None
-            # save to Django!
+        if name != "None None": # because seriously, what the hell is None None
+            # make a hardware or update existing
+            hardware, created = Hardware.objects.get_or_create(url=url, name=name, source=source)
+            hardware.computersCertifiedIn = computersCertifiedIn
+            hardware.computersEnabledIn = computersEnabledIn
             hardware.save()
 
     def parse_computer(self, response):
         sel = Selector(response)
 
         # make a computer item and populate its fields
-        computer = ComputerItem()
-        computer['url'] = response.url
-        computer['name'] = self.getName(sel)
-        computer['certified'] = self.getCertification(sel)
-        computer['version'] = self.getVersion(sel)
-        computer['parts'] = self.getParts(sel)
-        computer['source'] = 'Ubuntu'
+        url = response.url
+        name = self.getName(sel)
+        certified = self.getCertification(sel)
+        version = self.getVersion(sel)
+        parts = self.getParts(sel)
+        source = 'Ubuntu'
 
-        # save to Django!
+        # make a computer or update existing
+        computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
+        computer.certified = certified
+        computer.version = version
+        computer.parts = parts # this should be fixed/organized in the Toshiba site
         computer.save()
 
     ''' Gets the name of the hardware/computer '''

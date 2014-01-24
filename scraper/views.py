@@ -20,11 +20,12 @@ def search(request):
 	obj = ''
 	if ('q' in request.GET) and request.GET['q'].strip():
 		query_string = request.GET['q']
-		entry_query = get_query(query_string, ['name'])
 		obj = request.GET['type'] # either hardware or computer
 		if obj == 'hardware':
+			entry_query = get_query(query_string, ['name', 'computersCertifiedIn', 'computersEnabledIn'])
 			found_entries = Hardware.objects.filter(entry_query).order_by('name')
 		else:
+			entry_query = get_query(query_string, ['name', 'parts'])
 			found_entries = Computer.objects.filter(entry_query).order_by('name')
 	return render_to_response('scraper/index.html',
                           { 'query_string': query_string, 'found_entries': found_entries, 'type' : obj},
