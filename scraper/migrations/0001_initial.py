@@ -15,6 +15,7 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('computersCertifiedIn', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True)),
             ('computersEnabledIn', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True)),
+            ('source', self.gf('django.db.models.fields.CharField')(max_length=200)),
         ))
         db.send_create_signal(u'scraper', ['Hardware'])
 
@@ -25,7 +26,8 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('certified', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('version', self.gf('django.db.models.fields.CharField')(max_length=200)),
-            ('parts', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True)),
+            ('parts', self.gf('django.db.models.fields.CharField')(max_length=2000000, null=True)),
+            ('source', self.gf('django.db.models.fields.CharField')(max_length=200)),
         ))
         db.send_create_signal(u'scraper', ['Computer'])
 
@@ -44,7 +46,8 @@ class Migration(SchemaMigration):
             'certified': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'parts': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True'}),
+            'parts': ('django.db.models.fields.CharField', [], {'max_length': '2000000', 'null': 'True'}),
+            'source': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
             'version': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
@@ -54,6 +57,7 @@ class Migration(SchemaMigration):
             'computersEnabledIn': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'source': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '200'})
         }
     }
