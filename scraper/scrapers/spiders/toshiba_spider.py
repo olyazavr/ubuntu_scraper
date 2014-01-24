@@ -33,11 +33,11 @@ class ToshibaSpider(CrawlSpider):
         computer['source'] = 'Toshiba'
 
         # save to Django!
-        # computer.save()
+        computer.save()
 
-    ''' Returns name of computer '''
+    ''' Returns name of computer,with Toshiba in front to allow for better searching '''
     def getName(self, sel):
-        return sel.xpath('//div[@id="breadcrumb-links"]/a[@class="active"]/text()').extract()[0]
+        return 'Toshiba ' + sel.xpath('//div[@id="breadcrumb-links"]/a[@class="active"]/text()').extract()[0]
 
     ''' Click the link, '''
     def getParts(self, saveDir, url):
