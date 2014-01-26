@@ -1,13 +1,13 @@
-from ..items import ComputerItem
-from selenium import webdriver
+from ..items import Computer
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
 from scrapy.http.request import Request
 from scraper.utils import parse_pdf
-import re
-import time
 import tempfile
+import urllib2
+import re
+import os
 
 class ToshibaSpider(CrawlSpider):
     name = "toshiba_spider"
@@ -23,73 +23,109 @@ class ToshibaSpider(CrawlSpider):
         saveDir = tempfile.mkdtemp()
         sel = Selector(response)
 
-        # make a computer item and populate its fields
-        computer = ComputerItem()
-        computer['url'] = response.url
-        computer['name'] = self.getName(sel)
-        computer['certified'] = 'Unknown'
-        computer['version'] = 'Unknown'
-        computer['parts'] = self.getParts(saveDir, response.url)
-        computer['source'] = 'Toshiba'
+        # make a computer item and populate its fields\
+        url = response.url
+        name = self.getName(sel).encode('utf-8')
+        certified = 'Unknown'
+        version = 'Unknown'
+        parts = self.getParts(saveDir, name)
+        source = 'Toshiba'
 
-        # save to Django!
+        name = 'Toshiba ' + name
+
+        # make a computer or update existing
+        computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
+        computer.certified = certified
+        computer.version = version
+        computer.parts = parts # this should be fixed/organized in the Toshiba site
         computer.save()
 
-    ''' Returns name of computer,with Toshiba in front to allow for better searching '''
+    ''' Returns name of computer '''
     def getName(self, sel):
-        return 'Toshiba ' + sel.xpath('//div[@id="breadcrumb-links"]/a[@class="active"]/text()').extract()[0]
+        return sel.xpath('//div[@id="breadcrumb-links"]/a[@class="active"]/text()').extract()[0]
 
     ''' Click the link, '''
-    def getParts(self, saveDir, url):
-        driver = self.setupDriver(saveDir)
-        driver.get(url) # go to page with computer model
+    def getParts(self, saveDir, name):
+        url = 'http://cdgenp01.csd.toshiba.com/content/product/pdf_files/detailed_specs/'
+        urlAlt = None
 
-        # click on manuals tab to see links
-        tab = driver.find_element_by_xpath('//div[@id="tabs"]/ul/li[@id="manualsSpecsTab"]')
-        tab.click()
-        link = None
-        parts = ''
+        # sketchy hackery. let's try to guess the url to the pdf.
+        if "Satellite Pro" in name:
+            url += "satellite_pro_" + name[14:]
+        elif "T-Series" in name:
+            url += "t-series_" + name[9:].lower()
+        elif "All-in-One" in name:
+            url += "toshiba_" + name[11:].upper()
+        elif "Value-Priced" in name:
+            url += "toshiba_" + name[13:]
+        elif "TE-Series" in name:
+            url += "te_" + name[12:]
+        elif "KIRA" in name:
+            url += "kirabook" + name[14:].replace(" ", "-")
+        elif "mini notebook" in name:
+            urlAlt = url + "toshiba_mini_" +name[14:]
+            url += "toshiba_mini" + name[14:]
+        else:
+            urlName = name.replace(" ", "_") # spaces to underscores
+            urlName = urlName[0].lower() + urlName[1:] # first letter is lower case
+            url += urlName
 
-        try: # some are ".. .pdf"
-            link = driver.find_element_by_partial_link_text(".pdf") 
+        pdf = ''
+        try:
+            pdf = urllib2.urlopen(url + '.pdf')
         except:
-            try: # some are "Detailed specs ..."
-                link = driver.find_element_by_partial_link_text("Detailed specs") 
-            except: # we didn't find anything ):
-                pass 
-        
-        if link != None:
-            link.click() # pdf automatically saved once we open this
-            time.sleep(2) # make sure we save the file before processing
-            parts = parse_pdf(saveDir)
+            try:
+                pdf = urllib2.urlopen(url.lower() + '.pdf')
+            except:
+                if urlAlt:
+                    try:
+                        pdf = urllib2.urlopen(urlAlt + '.pdf')
+                        print 'success'
+                    except:
+                        #print 'failed on ' + name + ' tried ' + urlAlt
+                        pass
+                #else:
+                #    print 'failed on ' + name + ' tried ' + url
 
-        # now to close everything
-        for window in driver.window_handles:
-            driver.switch_to_window(window);
-            driver.close();
+        parts = ''
+        if pdf:
+            #print pdf
+            os.chdir(saveDir)
+            pdfFile = open('file.pdf', 'w')
+            pdfFile.write(pdf.read())
+            pdfFile.close()
+            parts = parse_pdf(saveDir)
 
         return parts
 
-    def setupDriver(self, saveDir):
-        #this is for downloading pdfs
-        fp = webdriver.FirefoxProfile()
-        fp.set_preference("browser.download.folderList",2)
-        fp.set_preference("browser.download.manager.showWhenStarting", False)
-        fp.set_preference("browser.download.dir", saveDir)
-        # this will save every pdf we find
-        fp.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
-        fp.set_preference('pdfjs.disabled', True) # pdfjs screws up saving pdfs
-
-        driver = webdriver.Firefox(firefox_profile=fp)
-        return driver
-
-    ''' Follow urls from JSON in homepage with list of all computers'''
+    ''' Follow urls from JSON in homepage with list of all laptops and desktops '''
     def parse_urls(self, response):
     	sel = Selector(response)
         baseURL = 'http://support.toshiba.com/support/modelHome?freeText='
 
         # this gets the script tag we want
         script = sel.xpath('//script').extract()[8]
+
+        # THIS DOESN'T WORK I DON'T KNOW WHY AHHHHHHH
+        # start = script.find("eval(") + 5
+        # end = script.find('$("input#freeText").') - 2
+        # jsonScript = script[start:end]
+        # print jsonScript
+
+        # IF THAT THING WORKED I COULD DO THIS
+        # mids = []
+        # jsonScript = json.loads(script)
+        # for family in jsonScript["2756709"]["family"]:
+        #     for model in family["models"]:
+        #         mids.append(model["mid"])
+        # print mids
+
+        # THIS IS A SKETCHY-ASS WORKAROUND
+        # we need everything between Laptops and Tablets 
+        # and between Desktops and Laptop Accessories
+        script1 = script[script.find("Laptops") : script.find("Tablets")]
+        script2 = script[script.find("Desktops") : script.find("Laptop Accessories")]
+        script = script1 + script2
 
         # we only care about "mid":"1200007643"
         midsList = re.findall('"mid":"\d+"', script)
