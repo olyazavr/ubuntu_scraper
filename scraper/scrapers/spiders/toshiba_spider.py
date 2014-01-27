@@ -8,6 +8,7 @@ import tempfile
 import urllib2
 import re
 import os
+import json
 
 class ToshibaSpider(CrawlSpider):
     name = "toshiba_spider"
@@ -23,7 +24,7 @@ class ToshibaSpider(CrawlSpider):
         saveDir = tempfile.mkdtemp()
         sel = Selector(response)
 
-        # make a computer item and populate its fields\
+        # make a computer item and populate its fields
         url = response.url
         name = self.getName(sel).encode('utf-8')
         certified = 'Unknown'
@@ -44,7 +45,7 @@ class ToshibaSpider(CrawlSpider):
     def getName(self, sel):
         return sel.xpath('//div[@id="breadcrumb-links"]/a[@class="active"]/text()').extract()[0]
 
-    ''' Click the link, '''
+    ''' Guess the pdf name and save/convert the first page of the specs manual '''
     def getParts(self, saveDir, name):
         url = 'http://cdgenp01.csd.toshiba.com/content/product/pdf_files/detailed_specs/'
         urlAlt = None
@@ -73,19 +74,21 @@ class ToshibaSpider(CrawlSpider):
         pdf = ''
         try:
             pdf = urllib2.urlopen(url + '.pdf')
+            print 'success on ' + name
         except:
             try:
                 pdf = urllib2.urlopen(url.lower() + '.pdf')
+                print 'success lower on ' + name
             except:
                 if urlAlt:
                     try:
                         pdf = urllib2.urlopen(urlAlt + '.pdf')
-                        print 'success'
+                        print 'success on alt ' + name
                     except:
-                        #print 'failed on ' + name + ' tried ' + urlAlt
+                        print 'failed on ' + name + ' tried ' + urlAlt
                         pass
-                #else:
-                #    print 'failed on ' + name + ' tried ' + url
+                else:
+                    print 'failed on ' + name + ' tried ' + url
 
         parts = ''
         if pdf:
@@ -106,30 +109,17 @@ class ToshibaSpider(CrawlSpider):
         # this gets the script tag we want
         script = sel.xpath('//script').extract()[8]
 
-        # THIS DOESN'T WORK I DON'T KNOW WHY AHHHHHHH
-        # start = script.find("eval(") + 5
-        # end = script.find('$("input#freeText").') - 2
-        # jsonScript = script[start:end]
-        # print jsonScript
+        # super clever extraction of the json
+        start = script.find("eval(") + 5
+        end = script.find('}]}]}})') + 6
+        script = script[start:end]
 
-        # IF THAT THING WORKED I COULD DO THIS
-        # mids = []
-        # jsonScript = json.loads(script)
-        # for family in jsonScript["2756709"]["family"]:
-        #     for model in family["models"]:
-        #         mids.append(model["mid"])
-        # print mids
-
-        # THIS IS A SKETCHY-ASS WORKAROUND
-        # we need everything between Laptops and Tablets 
-        # and between Desktops and Laptop Accessories
-        script1 = script[script.find("Laptops") : script.find("Tablets")]
-        script2 = script[script.find("Desktops") : script.find("Laptop Accessories")]
-        script = script1 + script2
-
-        # we only care about "mid":"1200007643"
-        midsList = re.findall('"mid":"\d+"', script)
+        # get all the mids
+        mids = []
+        jsonScript = json.loads(script)
+        for family in jsonScript["2756709"]["family"]:
+            for model in family["models"]:
+                mids.append(model["mid"])
         
-        for mid in midsList:
-            midNum = re.findall("\d+", mid)[0] # parse out the non-numbers 
-            yield Request(baseURL + midNum, callback=self.parse_computer)
+        for mid in mids:
+            yield Request(baseURL + mid, callback=self.parse_computer)
