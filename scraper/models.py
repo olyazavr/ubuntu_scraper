@@ -1,10 +1,31 @@
 from django.db import models
 
-class Hardware(models.Model):
+class Computer(models.Model):
     url = models.URLField(unique=True)
     name = models.CharField(max_length=200)
-    computersCertifiedIn = models.TextField(null=True)
-    computersEnabledIn = models.TextField(null=True)
+    certified = models.CharField(max_length=200)
+    version = models.CharField(max_length=200)
+    source = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return self.name
+
+    ''' Get the brand from the first word of the name (lame, but looks nice)'''
+    def brand(self):
+        return self.name.split(" ")[0]
+    brand.admin_order_field = 'name'
+
+    ''' Convert flattened string of parts into list '''
+    def splitParts(self):
+        if self.parts:
+            return self.parts.split(", ")
+        return ''
+
+class Hardware(models.Model):
+    url = models.URLField(null=True)
+    name = models.CharField(max_length=200)
+    computersCertifiedIn = models.ManyToManyField(Computer, related_name='certifiedIn')
+    computersEnabledIn = models.ManyToManyField(Computer, related_name='enabledIn')
     source = models.CharField(max_length=200)
 
     def __unicode__(self):
@@ -36,26 +57,4 @@ class Hardware(models.Model):
     def splitEnabComp(self):
         if self.computersEnabledIn:
             return self.computersEnabledIn.split(", ")
-        return ''
-
-class Computer(models.Model):
-    url = models.URLField(unique=True)
-    name = models.CharField(max_length=200)
-    certified = models.CharField(max_length=200)
-    version = models.CharField(max_length=200)
-    parts = models.TextField(null=True)
-    source = models.CharField(max_length=200)
-
-    def __unicode__(self):
-        return self.name
-
-    ''' Get the brand from the first word of the name (lame, but looks nice)'''
-    def brand(self):
-        return self.name.split(" ")[0]
-    brand.admin_order_field = 'name'
-
-    ''' Convert flattened string of parts into list '''
-    def splitParts(self):
-        if self.parts:
-            return self.parts.split(", ")
         return ''

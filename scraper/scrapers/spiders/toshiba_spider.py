@@ -6,7 +6,6 @@ from scrapy.http.request import Request
 from scraper.utils import parse_pdf
 import tempfile
 import urllib2
-import re
 import os
 import json
 

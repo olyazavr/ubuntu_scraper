@@ -23,16 +23,19 @@ class UbuntuSpider(CrawlSpider):
     	# make a hardware item and populate its fields
     	url = response.url
     	name = self.getName(sel)
+
+        if name == "None None": # because seriously, what the hell is None None
+            return; 
+
     	computersCertifiedIn = self.computersIn(sel, "certified")
     	computersEnabledIn = self.computersIn(sel, "enabled")
         source = 'Ubuntu'
 
-        if name != "None None": # because seriously, what the hell is None None
-            # make a hardware or update existing
-            hardware, created = Hardware.objects.get_or_create(url=url, name=name, source=source)
-            hardware.computersCertifiedIn = computersCertifiedIn
-            hardware.computersEnabledIn = computersEnabledIn
-            hardware.save()
+        # make a hardware or update existing
+        hardware, created = Hardware.objects.get_or_create(url=url, name=name, source=source)
+        hardware.computersCertifiedIn = computersCertifiedIn
+        hardware.computersEnabledIn = computersEnabledIn
+        hardware.save()
 
     def parse_computer(self, response):
         sel = Selector(response)
@@ -49,18 +52,26 @@ class UbuntuSpider(CrawlSpider):
         computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
         computer.certified = certified
         computer.version = version
-        computer.parts = parts # this should be fixed/organized in the Toshiba site
         computer.save()
+
+        for part in parts:
+            if certified == "Certified" and computer not in part.computersCertifiedIn:
+                part.computersCertifiedIn.add(computer)
+                part.save()
+            elif certified == "Enabled" and computer not in part.computersEnabledIn:
+                part.computersEnabledIn.add(computer)
+                part.save()
 
     ''' Gets the name of the hardware/computer '''
     def getName(self, sel):
         return sel.xpath('//p[@class="large"]/strong/text()').extract()[0]
 
-    ''' Returns a list of certified/enabled computers for the part without garbled html.
+    ''' Returns a list of certified/enabled computers for the part.
         Make sure model is either "certified" or "enabled" depending on which list
         of computers is needed.'''
     def computersIn(self, sel, model):
-        computersList = []
+        computerInfo = []
+        computers = []
         # computers is a list of computers with html
         computers = sel.xpath("//li[@class='model " + model + "']/p").extract()
         for text in computers:
@@ -68,9 +79,17 @@ class UbuntuSpider(CrawlSpider):
             part1 = text[text.find('p>') + 2 : text.find('<a')]
             part2 = text[text.find('">') + 2 : text.find('</a')]
             part3 = text[text.find('a>') + 2 : text.find('</p')]
-            computersList.append(part1+part2+part3)
-        # flatten to comma separated string
-        return ', '.join([str(x) for x in computersList])
+            url = text[text.find('f="') + 3 : text.find('"/>')]
+            computerInfo.append((part1+part2+part3, url))
+        
+        for (name, url) in computerInfo:
+            computer, created = Computer.objects.get_or_create(url=url, name=name, source='Ubuntu')
+            if created:
+                computer.certified = model.title() # we know what we're looking for
+                computer.version = 'Unknown'
+                computer.save()
+            computers.append(computer)
+        return computers
 
     ''' Returns whether the computer is Certified or Enabled'''
     def getCertification(self, sel):
@@ -85,5 +104,10 @@ class UbuntuSpider(CrawlSpider):
     ''' Gets the list of parts in this computer '''
     def getParts(self, sel):
         partsList =  sel.xpath('//div[@id="hardware-overview"]/dl/dd/text()').extract()
-        # flatten to comma separated string
-        return ', '.join([str(x) for x in partsList])
+        parts = []
+        for part in partsList:
+            hardware, created = Hardware.objects.get_or_create(name=part, source='Ubuntu')
+            if created:
+                hardware.save()
+            parts.append(hardware)
+        return parts
