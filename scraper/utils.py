@@ -1,24 +1,5 @@
-import slate
 from django.db.models import Q
 import re
-import os
-import glob
-
-def parse_pdf(pdfDir):
-    ''' Converts a pdf to text and returns the first page to be parsed 
-    later. Pass in the directory the files are saved in, will parse the
-    latest one every time.'''
-
-    # super sketchy
-    os.chdir(pdfDir)
-    newest = max(glob.iglob('*.pdf'), key=os.path.getctime) # find the file just saved
-    doc = []
-
-    with open(newest) as pdf:
-        doc = slate.PDF(pdf) # convert the pdf
-
-    os.remove(newest) # delete when we're done
-    return doc[0] # return first page for now
 
 def normalize_query(query_string,
                     findterms=re.compile(r'"([^"]+)"|(\S+)').findall,

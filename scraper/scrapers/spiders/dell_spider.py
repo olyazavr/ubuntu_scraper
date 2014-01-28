@@ -74,6 +74,7 @@ class DellSpider(CrawlSpider):
         parts = []
         # get the actual drivers that belong to the sections we want
         for i in wantedSections:
+            # the div that contains a span with text "(Driver)" THIS IS TOO COOL
             parts += sel.xpath('//div[@class="uif_ecContent gsd_bodyCopyMedium uif_ecCollapsed"][' +
                     str(i+1) + ']//div[contains(span, "(Driver)")]/a[@id="DriverDetailslnk"]/text()').extract()
 
