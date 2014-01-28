@@ -13,11 +13,11 @@ class ToshibaSpider(CrawlSpider):
     name = "toshiba_spider"
     allowed_domains = ['support.toshiba.com']
     start_urls = [
-                    'http://support.toshiba.com/support/home', # this has JS for all computers
-    				]
+            'http://support.toshiba.com/support/home', # this has JS for all computers
+    ]
     rules = [ 
-    		Rule(SgmlLinkExtractor(allow=['/support/home']), 'parse_urls'),
-    		]
+    	Rule(SgmlLinkExtractor(allow=['/support/home']), 'parse_urls'),
+    ]
 
     def parse_computer(self, response):
         saveDir = tempfile.mkdtemp()
@@ -40,12 +40,13 @@ class ToshibaSpider(CrawlSpider):
         computer.parts = parts # this should be fixed/organized in the Toshiba site
         computer.save()
 
-    ''' Returns name of computer '''
     def getName(self, sel):
+        ''' Returns name of computer '''
+
         return sel.xpath('//div[@id="breadcrumb-links"]/a[@class="active"]/text()').extract()[0]
 
-    ''' Guess the pdf name and save/convert the first page of the specs manual '''
     def getParts(self, saveDir, name):
+        ''' Guess the pdf name and save/convert the first page of the specs manual '''
         url = 'http://cdgenp01.csd.toshiba.com/content/product/pdf_files/detailed_specs/'
         urlAlt = None
 
@@ -100,8 +101,9 @@ class ToshibaSpider(CrawlSpider):
 
         return parts
 
-    ''' Follow urls from JSON in homepage with list of all laptops and desktops '''
     def parse_urls(self, response):
+        ''' Follow urls from JSON in homepage with list of all laptops and desktops '''
+        
     	sel = Selector(response)
         baseURL = 'http://support.toshiba.com/support/modelHome?freeText='
 

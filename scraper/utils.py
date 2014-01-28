@@ -4,10 +4,11 @@ import re
 import os
 import glob
 
-''' Converts a pdf to text and returns the first page to be parsed 
+def parse_pdf(pdfDir):
+    ''' Converts a pdf to text and returns the first page to be parsed 
     later. Pass in the directory the files are saved in, will parse the
     latest one every time.'''
-def parse_pdf(pdfDir):
+
     # super sketchy
     os.chdir(pdfDir)
     newest = max(glob.iglob('*.pdf'), key=os.path.getctime) # find the file just saved
@@ -19,20 +20,22 @@ def parse_pdf(pdfDir):
     os.remove(newest) # delete when we're done
     return doc[0] # return first page for now
 
-''' Splits the query string in invidual keywords, getting rid of unecessary spaces
+def normalize_query(query_string,
+                    findterms=re.compile(r'"([^"]+)"|(\S+)').findall,
+                    normspace=re.compile(r'\s{2,}').sub):
+    ''' Splits the query string in invidual keywords, getting rid of unecessary spaces
     and grouping quoted words together.
     Example:
     >>> normalize_query('  some random  words "with   quotes  " and   spaces')
         ['some', 'random', 'words', 'with quotes', 'and', 'spaces'] '''
-def normalize_query(query_string,
-                    findterms=re.compile(r'"([^"]+)"|(\S+)').findall,
-                    normspace=re.compile(r'\s{2,}').sub):
+
     return [normspace(' ', (t[0] or t[1]).strip()) for t in findterms(query_string)] 
 
 
-''' Returns a query, that is a combination of Q objects. That combination
-    aims to search keywords within a model by testing the given search fields.'''
 def get_query(query_string, search_fields):
+    ''' Returns a query, that is a combination of Q objects. That combination
+    aims to search keywords within a model by testing the given search fields.'''
+
     query = None # Query to search for every search term        
     terms = normalize_query(query_string)
     for term in terms:

@@ -3,19 +3,18 @@ from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
 from scrapy.http.request import Request
-import re
 
 class DellSpider(CrawlSpider):
     name = "dell_spider"
     allowed_domains = ['dell.com']
     start_urls = [
-                    'http://www.dell.com/support/my-support/us/en/19/Products/laptop', # all laptops
-                    'http://www.dell.com/support/my-support/us/en/19/Products/desktop', # all desktops
-    				]
+        'http://www.dell.com/support/my-support/us/en/19/Products/laptop', # all laptops
+        'http://www.dell.com/support/my-support/us/en/19/Products/desktop', # all desktops
+    ]
     rules = [ 
-            Rule(SgmlLinkExtractor(allow=['/support/my-support/us/en/19/Products/laptop/\w+']), 'parse_links'), # laptop make
-            Rule(SgmlLinkExtractor(allow=['/support/my-support/us/en/19/Products/desktop/\w+']), 'parse_links'), # desktop make
-            ]
+        Rule(SgmlLinkExtractor(allow=['/support/my-support/us/en/19/Products/laptop/\w+']), 'parse_links'), # laptop make
+        Rule(SgmlLinkExtractor(allow=['/support/my-support/us/en/19/Products/desktop/\w+']), 'parse_links'), # desktop make
+    ]
 
     def parse_computer(self, response):
         sel = Selector(response)
@@ -46,17 +45,19 @@ class DellSpider(CrawlSpider):
         # computer.save()
         
 
-    ''' Returns name of computer '''
     def getName(self, sel):
+        ''' Returns name of computer '''
+        
         # this applies if there are drivers found
         name = sel.xpath('//div[@class="gsd_subSectionHeading"]/text()').extract()
         if not name: # otherwise, nothing was found, throw it out
             return 'drop'
         return 'Dell ' + name[0].encode('utf-8').strip()
-
-    ''' Get audio, video, chipset, and network parts from the drivers list. 
-        Return "drop" if the release date is older than 2010. '''
+    
     def getParts(self, sel):
+        ''' Get audio, video, chipset, and network parts from the drivers list. 
+        Return "drop" if the release date is older than 2010. '''
+
         # we don't care about things older than 2010
         releaseDate = sel.xpath('//div[@class="padding20right ReleaseDate gsd_bodyCopyMedium"]/text()').extract()[0].strip()
         if int(releaseDate[-2:]) < 10: 
@@ -92,10 +93,11 @@ class DellSpider(CrawlSpider):
                 parts[i] = part[:part.find(" Application")]
 
         return parts
-
-    ''' Find all of the links to computers (they have some weird javascript stuff so we 
-        can't just click them) and convert them to the link to the drivers. '''
+    
     def parse_links(self, response):
+        ''' Find all of the links to computers (they have some weird javascript stuff so we 
+        can't just click them) and convert them to the link to the drivers. '''
+
         sel = Selector(response)
         baseURL = 'http://www.dell.com/'
 

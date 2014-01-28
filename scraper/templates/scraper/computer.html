@@ -5,8 +5,8 @@
         <li>Version: {{ computer.version }}</li>
         <li>Parts:
         	<ul>
-        		{% for part in computer.splitParts %}
-        			<li> {{ part }}</li>
+        		{% for part in computer.getParts %}
+        			<li> <a href="{% url 'hardware' part.id %}">{{ part.name }}</a></li>
     			{% endfor %}
         	</ul>
         </li>

@@ -3,19 +3,19 @@
 <ul>
 		<li>Certification: {{ hardware.certified }}</li>
         <li>Computers Certified In:
-        	{% if hardware.splitCertComp %}
+        	{% if hardware.computersCertifiedIn %}
         	<ul>
-        		{% for comp in hardware.splitCertComp %}
-        			<li> {{ comp }}</li>
+        		{% for comp in hardware.computersCertifiedIn.all %}
+        			<li> <a href="{% url 'computer' comp.id %}">{{ comp.name }}</a></li>
     			{% endfor %}
         	</ul>
         	{% endif %}
         </li>
         <li>Computers Enabled In: 
-        	{% if hardware.splitEnabComp %}
+        	{% if hardware.computersEnabledIn %}
         	<ul>
-        		{% for comp in hardware.splitEnabComp %}
-        			<li> {{ comp }}</li>
+        		{% for comp in hardware.computersEnabledIn.all %}
+        			<li> <a href="{% url 'computer' comp.id %}">{{ comp.name }}</a></li>
     			{% endfor %}
         	</ul>
         	{% endif %}

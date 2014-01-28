@@ -13,8 +13,9 @@ class ComputerView(generic.DetailView):
     model = Computer
     template_name = 'scraper/computer.html'
 
-''' Searches and displays the found results '''
 def search(request):
+	''' Searches and displays the found results '''
+	
 	query_string = ''
 	found_entries = None
 	obj = ''
@@ -22,10 +23,10 @@ def search(request):
 		query_string = request.GET['q']
 		obj = request.GET['type'] # either hardware or computer
 		if obj == 'hardware':
-			entry_query = get_query(query_string, ['name', 'computersCertifiedIn', 'computersEnabledIn'])
+			entry_query = get_query(query_string, ['name'])
 			found_entries = Hardware.objects.filter(entry_query).order_by('name')
 		else:
-			entry_query = get_query(query_string, ['name', 'parts'])
+			entry_query = get_query(query_string, ['name'])
 			found_entries = Computer.objects.filter(entry_query).order_by('name')
 	return render_to_response('scraper/index.html',
                           { 'query_string': query_string, 'found_entries': found_entries, 'type' : obj},

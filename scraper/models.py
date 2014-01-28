@@ -10,16 +10,17 @@ class Computer(models.Model):
     def __unicode__(self):
         return self.name
 
-    ''' Get the brand from the first word of the name (lame, but looks nice)'''
     def brand(self):
+        ''' Get the brand from the first word of the name (lame, but looks nice)'''
         return self.name.split(" ")[0]
     brand.admin_order_field = 'name'
 
-    ''' Convert flattened string of parts into list '''
-    def splitParts(self):
-        if self.parts:
-            return self.parts.split(", ")
-        return ''
+    def getParts(self):
+        ''' Returns the parts of the computer '''
+
+        if self.certified == "Certified":
+            return self.certifiedIn.all()
+        return self.enabledIn.all()
 
 class Hardware(models.Model):
     url = models.URLField(null=True)
@@ -30,31 +31,17 @@ class Hardware(models.Model):
 
     def __unicode__(self):
         return self.name
-
-    ''' Is it certified in at least one computer; if not, is it enabled in at least
-        one computer. Otherwise, it is unknown. '''
+    
     def certified(self):
+        ''' Is it certified in at least one computer; if not, is it enabled in at least
+        one computer. Otherwise, it is unknown. '''
         if self.computersCertifiedIn:
             return "Certified"
         if self.computersEnabledIn:
             return "Enabled"
         return "Unknown"
 
-    ''' Get the brand from the first word of the name (lame, but looks nice)'''
     def brand(self):
+        ''' Get the brand from the first word of the name (lame, but looks nice)'''
         return self.name.split(" ")[0]
     brand.admin_order_field = 'name'
-
-    ''' Convert flattened string of computersCertifiedIn into list. Duplicate
-        because Django views cannot pass arguments into methods. '''
-    def splitCertComp(self):
-        if self.computersCertifiedIn:
-            return self.computersCertifiedIn.split(", ")
-        return ''
-
-    ''' Convert flattened string of computersEnabledIn into list. Duplicate
-        because Django views cannot pass arguments into methods. '''
-    def splitEnabComp(self):
-        if self.computersEnabledIn:
-            return self.computersEnabledIn.split(", ")
-        return ''
