@@ -41,7 +41,7 @@ class DellSpider(CrawlSpider):
         # computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
         # computer.certified = certified
         # computer.version = version
-        # computer.parts = parts # this should be fixed/organized in the Toshiba site
+        # computer.parts = parts
         # computer.save()
         
 

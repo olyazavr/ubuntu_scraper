@@ -8,17 +8,16 @@ import re
 class ToshibaSpider(CrawlSpider):
     name = "toshiba_spider"
     allowed_domains = ['toshiba.com']
+    totalItems = '1000' # for pagination; there are really only about 100, but just to be safe
     start_urls = [
-            'http://www.toshiba.com/us/laptop-finder', # all laptops
-            'http://www.toshiba.com/us/desktop-finder', # all desktops
+            'http://www.toshiba.com/us/laptop-finder?target=laptops.to&rpp=' + totalItems, # all laptops
+            'http://www.toshiba.com/us/desktop-finder?target=desktops.to&rpp=' + totalItems, # all desktops
     ]
     rules = [
         Rule(SgmlLinkExtractor(allow=['/us/computers/laptops/\w+/.*'], 
                             deny='/us/computers/laptops/.*/reviews'), 'get_specs'), # particular laptop
         Rule(SgmlLinkExtractor(allow=['/us/computers/desktops/\w+/.*'],
                             deny='/us/computers/desktops/.*/reviews'), 'get_specs'), # particular desktop
-        Rule(SgmlLinkExtractor(allow=['/us/laptop-finder#.*'])), # next page
-        Rule(SgmlLinkExtractor(allow=['//us/desktop-finder#.*'])), # next page
     ]
 
     def parse_computer(self, response):
@@ -33,16 +32,15 @@ class ToshibaSpider(CrawlSpider):
         source = 'Toshiba'
 
         print url
-        print name
         print parts
+        print '\n'
 
         # make a computer or update existing
         # computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
         # computer.certified = certified
         # computer.version = version
-        # computer.parts = parts # this should be fixed/organized in the Toshiba site
+        # computer.parts = parts
         # computer.save()
-        pass
 
     def getName(self, sel):
         ''' Returns name of computer '''
@@ -54,13 +52,30 @@ class ToshibaSpider(CrawlSpider):
             network, chipset/graphics) '''
 
         parts = []
-
+        # processor
+        parts.extend(self.getPart(sel, "Performance", "ProcessorCentralProcessingUnit"))
         # chipset
-        allPerformance = sel.xpath('//div[contains(h4, "Performance")]/dl').extract()[0]
-        # somewhat isolate what we want
-        allPerformance = '<' + allPerformance[allPerformance.find("GraphicsGraphicsProcessingUnit"): ]
-        parts.append(re.split('<[ a-zA-Z0-9"=/\()\']+>', allPerformance))
+        parts.extend(self.getPart(sel, "Performance", "GraphicsGraphicsProcessingUnit"))
+        # wireless
+        parts.extend(self.getPart(sel, "Communication", "Wireless"))
 
+        return parts
+
+    def getPart(self, sel, divisionName, javascriptTag):
+        ''' Gets all the parts from the specified division, that start with the
+            particular javascript tag '''
+
+        allDivision = sel.xpath('//div[contains(h4, "' + divisionName + '")]/dl').extract()[0]
+        # we want between the divistion and the next division
+        allDivision = '<' + allDivision[allDivision.find("('" + javascriptTag + "')"):]
+        # removes the next divison
+        allDivision = re.split('</dd>\s*<dt', allDivision)[0]
+
+        parts = re.split('<[ a-zA-Z0-9"=/\()\']*>', allDivision)
+
+        # clean up
+        unwanted = ['*', 'Choose from:', u'\xab', 'current selection']
+        parts = filter(lambda x: x.strip() and x not in unwanted, parts)
         return parts
 
     def get_specs(self, response):

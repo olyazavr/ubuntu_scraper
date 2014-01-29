@@ -51,7 +51,8 @@ class UbuntuSpider(CrawlSpider):
 
         # make a computer or update existing
         computer, created = Computer.objects.get_or_create(url=url, source=source)
-        computer.name = name
+        if created: # only update name if we're creating
+            computer.name = name
         computer.certified = certified
         computer.version = version
         computer.save()
@@ -85,7 +86,10 @@ class UbuntuSpider(CrawlSpider):
             part2 = text[text.find('">') + 2 : text.find('</a')]
             part3 = text[text.find('a>') + 2 : text.find('</p')]
             url =  baseURL + text[text.find('f="') + 3 : text.find('/">')]
-            computerInfo.append(((part1+part2+part3), url))
+
+            # we don't care about servers
+            if part3 != " Server":
+                computerInfo.append(((part1+part2+part3), url))
         
         for (name, url) in computerInfo:
             computer, created = Computer.objects.get_or_create(url=url, source='Ubuntu')
@@ -96,20 +100,22 @@ class UbuntuSpider(CrawlSpider):
                 computer.save()
             computersList.append(computer)
         return computersList
-
     
     def getCertification(self, sel):
         ''' Returns whether the computer is Certified or Enabled'''
+
         # title() makes the first letter uppercase for maximum prettiness
         return sel.xpath('//div[@class="release"]').re("certified|enabled")[0].title()
     
     def getVersion(self, sel):
         ''' Returns the Ubuntu version that works for this computer.'''
+
         # version is 12.12(.12) format
         return sel.xpath('//div[@class="release"]/h3/text()').re("\d+.\d+.?\d*")[0]
 
     def getParts(self, sel):
         ''' Gets the list of parts in this computer '''
+
         partsList =  sel.xpath('//div[@id="hardware-overview"]/dl/dd/text()').extract()
         parts = []
         for part in partsList:
