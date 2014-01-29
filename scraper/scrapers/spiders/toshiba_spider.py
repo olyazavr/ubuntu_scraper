@@ -1,4 +1,4 @@
-from ..items import Computer
+from scraper.models import Computer
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -79,6 +79,7 @@ class ToshibaSpider(CrawlSpider):
         return parts
 
     def get_specs(self, response):
+        ''' Goes to the specs page of every computer page '''
+
         specs = '/specs?pop=true'
-        print response.url
         yield Request(response.url + specs, callback=self.parse_computer)

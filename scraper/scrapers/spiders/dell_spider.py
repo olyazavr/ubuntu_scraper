@@ -1,4 +1,4 @@
-from ..items import Computer
+from scraper.models import Computer
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -36,6 +36,10 @@ class DellSpider(CrawlSpider):
         # if the computer is too old, drop it
         if parts == 'drop':
             return 
+
+        print url
+        print name
+        print parts
 
         # make a computer or update existing
         # computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
@@ -75,8 +79,8 @@ class DellSpider(CrawlSpider):
         # get the actual drivers that belong to the sections we want
         for i in wantedSections:
             # the div that contains a span with text "(Driver)" THIS IS TOO COOL
-            parts += sel.xpath('//div[@class="uif_ecContent gsd_bodyCopyMedium uif_ecCollapsed"][' +
-                    str(i+1) + ']//div[contains(span, "(Driver)")]/a[@id="DriverDetailslnk"]/text()').extract()
+            parts += sel.xpath('//div[@class="uif_ecContent gsd_bodyCopyMedium uif_ecCollapsed"][' 
+                + str(i+1) + ']//div[contains(span, "(Driver)")]/a[@id="DriverDetailslnk"]/text()').extract()
 
         # clean up the name
         for i, part in enumerate(parts):
@@ -96,8 +100,9 @@ class DellSpider(CrawlSpider):
         return parts
     
     def parse_links(self, response):
-        ''' Find all of the links to computers (they have some weird javascript stuff so we 
-        can't just click them) and convert them to the link to the drivers. '''
+        ''' Find all of the links to computers (they have some weird 
+            javascript stuff so we can't just click them) and convert 
+            them to the link to the drivers. '''
 
         sel = Selector(response)
         baseURL = 'http://www.dell.com/'

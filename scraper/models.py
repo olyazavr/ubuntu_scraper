@@ -45,3 +45,13 @@ class Hardware(models.Model):
         ''' Get the brand from the first word of the name (lame, but looks nice)'''
         return self.name.split(" ")[0]
     brand.admin_order_field = 'name'
+
+class Processor(models.Model):
+    url = models.URLField(unique=True)
+    name = models.CharField(max_length=200)
+    codename = models.CharField(max_length=200)
+    graphics = models.CharField(max_length=200, null=True)
+    source = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return self.name
