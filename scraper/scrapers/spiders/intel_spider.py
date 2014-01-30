@@ -18,10 +18,15 @@ class IntelSpider(BaseSpider):
         source = 'Intel'
 
         processors = len(sel.xpath(xpath))
-        for i in range(processors):
+        for i in xrange(processors):
             # make a processor item and populate its fields
             url = self.getUrl(sel, xpath, i)
-            name = self.getName(sel, xpath, i)
+            name = self.getName(sel, xpath, i, processors)
+
+            # the processors on this page are old, we don't want them
+            if name == 'drop':
+                return
+
             graphics = self.getGraphics(sel, xpath, i)
 
             # make a processor or update existing
@@ -35,12 +40,17 @@ class IntelSpider(BaseSpider):
 
         return 'http://ark.intel.com' + sel.xpath(xpath + '/td[2]/a/@href').extract()[i]
 
-    def getName(self, sel, xpath, i):
+    def getName(self, sel, xpath, i, numProcessors):
         ''' Returns name of processor '''
 
-        name = sel.xpath(xpath + '/td[2]/a/text()').extract()[i]
-        # exclude "(20M Cache, 1.90 GHz)"
-        return name[:name.find("(")]
+        names = sel.xpath(xpath + '/td[2]/a/text()').extract()
+
+        # name is split into "name" and "GHz", so we want every other one
+        if len(names) != 2 * numProcessors:
+            # if this isn't the case, the processor is prehistoric, drop it
+           return 'drop'
+        
+        return names[2 * i].strip()
 
     def getCodename(self, sel):
         ''' Finds the codename of the current page of processors '''
