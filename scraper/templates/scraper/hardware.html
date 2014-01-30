@@ -5,7 +5,7 @@
         <li>Computers Certified In:
         	{% if hardware.computersCertifiedIn %}
         	<ul>
-        		{% for comp in hardware.computersCertifiedIn.all %}
+        		{% for comp in hardware.computersCertifiedIn %}
         			<li> <a href="{% url 'computer' comp.id %}">{{ comp.name }}</a></li>
     			{% endfor %}
         	</ul>
@@ -14,7 +14,7 @@
         <li>Computers Enabled In: 
         	{% if hardware.computersEnabledIn %}
         	<ul>
-        		{% for comp in hardware.computersEnabledIn.all %}
+        		{% for comp in hardware.computersEnabledIn %}
         			<li> <a href="{% url 'computer' comp.id %}">{{ comp.name }}</a></li>
     			{% endfor %}
         	</ul>

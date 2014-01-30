@@ -28,21 +28,24 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'scraper', ['Hardware'])
 
-        # Adding M2M table for field computersCertifiedIn on 'Hardware'
-        db.create_table(u'scraper_hardware_computersCertifiedIn', (
+        # Adding M2M table for field computersIn on 'Hardware'
+        db.create_table(u'scraper_hardware_computersIn', (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
             ('hardware', models.ForeignKey(orm[u'scraper.hardware'], null=False)),
             ('computer', models.ForeignKey(orm[u'scraper.computer'], null=False))
         ))
-        db.create_unique(u'scraper_hardware_computersCertifiedIn', ['hardware_id', 'computer_id'])
+        db.create_unique(u'scraper_hardware_computersIn', ['hardware_id', 'computer_id'])
 
-        # Adding M2M table for field computersEnabledIn on 'Hardware'
-        db.create_table(u'scraper_hardware_computersEnabledIn', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('hardware', models.ForeignKey(orm[u'scraper.hardware'], null=False)),
-            ('computer', models.ForeignKey(orm[u'scraper.computer'], null=False))
+        # Adding model 'Processor'
+        db.create_table(u'scraper_processor', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('url', self.gf('django.db.models.fields.URLField')(unique=True, max_length=200)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('codename', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('graphics', self.gf('django.db.models.fields.CharField')(max_length=200, null=True)),
+            ('source', self.gf('django.db.models.fields.CharField')(max_length=200)),
         ))
-        db.create_unique(u'scraper_hardware_computersEnabledIn', ['hardware_id', 'computer_id'])
+        db.send_create_signal(u'scraper', ['Processor'])
 
 
     def backwards(self, orm):
@@ -52,11 +55,11 @@ class Migration(SchemaMigration):
         # Deleting model 'Hardware'
         db.delete_table(u'scraper_hardware')
 
-        # Removing M2M table for field computersCertifiedIn on 'Hardware'
-        db.delete_table('scraper_hardware_computersCertifiedIn')
+        # Removing M2M table for field computersIn on 'Hardware'
+        db.delete_table('scraper_hardware_computersIn')
 
-        # Removing M2M table for field computersEnabledIn on 'Hardware'
-        db.delete_table('scraper_hardware_computersEnabledIn')
+        # Deleting model 'Processor'
+        db.delete_table(u'scraper_processor')
 
 
     models = {
@@ -71,12 +74,20 @@ class Migration(SchemaMigration):
         },
         u'scraper.hardware': {
             'Meta': {'object_name': 'Hardware'},
-            'computersCertifiedIn': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'certifiedIn'", 'symmetrical': 'False', 'to': u"orm['scraper.Computer']"}),
-            'computersEnabledIn': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'enabledIn'", 'symmetrical': 'False', 'to': u"orm['scraper.Computer']"}),
+            'computersIn': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['scraper.Computer']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'source': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True'})
+        },
+        u'scraper.processor': {
+            'Meta': {'object_name': 'Processor'},
+            'codename': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'graphics': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'source': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'url': ('django.db.models.fields.URLField', [], {'unique': 'True', 'max_length': '200'})
         }
     }
 

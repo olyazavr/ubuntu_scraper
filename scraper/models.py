@@ -12,21 +12,15 @@ class Computer(models.Model):
 
     def brand(self):
         ''' Get the brand from the first word of the name (lame, but looks nice)'''
+
         return self.name.split(" ")[0]
     brand.admin_order_field = 'name'
-
-    def getParts(self):
-        ''' Returns the parts of the computer '''
-
-        if self.certified == "Certified":
-            return self.certifiedIn.all()
-        return self.enabledIn.all()
+    
 
 class Hardware(models.Model):
     url = models.URLField(null=True)
     name = models.CharField(max_length=200)
-    computersCertifiedIn = models.ManyToManyField(Computer, related_name='certifiedIn')
-    computersEnabledIn = models.ManyToManyField(Computer, related_name='enabledIn')
+    computersIn = models.ManyToManyField(Computer)
     source = models.CharField(max_length=200)
 
     def __unicode__(self):
@@ -35,16 +29,29 @@ class Hardware(models.Model):
     def certified(self):
         ''' Is it certified in at least one computer; if not, is it enabled in at least
         one computer. Otherwise, it is unknown. '''
-        if self.computersCertifiedIn:
+
+        if self.computersCertifiedIn():
             return "Certified"
-        if self.computersEnabledIn:
+        if self.computersEnabledIn():
             return "Enabled"
         return "Unknown"
 
+    def computersCertifiedIn(self):
+        ''' Returns the set of computers the part is in that are certified '''
+
+        return self.computersIn.filter(certified='Certified')
+
+    def computersEnabledIn(self):
+        ''' Returns the set of computers the part is in that are enabled '''
+
+        return self.computersIn.filter(certified='Enabled')
+
     def brand(self):
         ''' Get the brand from the first word of the name (lame, but looks nice)'''
+
         return self.name.split(" ")[0]
     brand.admin_order_field = 'name'
+
 
 class Processor(models.Model):
     url = models.URLField(unique=True)

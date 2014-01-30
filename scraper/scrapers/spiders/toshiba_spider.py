@@ -1,4 +1,4 @@
-from scraper.models import Computer, Processor
+from scraper.models import Computer, Hardware, Processor
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -35,8 +35,12 @@ class ToshibaSpider(CrawlSpider):
         computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
         computer.certified = certified
         computer.version = version
-        computer.parts = parts
         computer.save()
+
+        for part in parts:
+            if computer not in part.computersIn.all():
+                part.computersIn.add(computer)
+                part.save()
 
     def getName(self, sel):
         ''' Returns name of computer '''
@@ -72,7 +76,16 @@ class ToshibaSpider(CrawlSpider):
                 except:
                     pass # ):
 
-        return processors + graphics + wireless
+        partNames = processors + graphics + wireless
+        parts = []
+        for part in partNames:
+            hardware, created = Hardware.objects.get_or_create(name=part)
+            if created:
+                hardware.source = 'Toshiba'
+                hardware.save()
+            parts.append(hardware)
+
+        return parts
 
     def getPart(self, sel, divisionName, javascriptTag):
         ''' Gets all the parts from the specified division, that start with the

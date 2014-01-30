@@ -1,4 +1,4 @@
-from scraper.models import Computer
+from scraper.models import Computer, Hardware
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -35,26 +35,26 @@ class DellSpider(CrawlSpider):
 
         # if the computer is too old, drop it
         if parts == 'drop':
-            return 
-
-        print url
-        print name
-        print parts
+            return
 
         # make a computer or update existing
-        # computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
-        # computer.certified = certified
-        # computer.version = version
-        # computer.parts = parts
-        # computer.save()
+        computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
+        computer.certified = certified
+        computer.version = version
+        computer.save()
         
+        for part in parts:
+            if computer not in part.computersIn.all():
+                part.computersIn.add(computer)
+                part.save()
 
     def getName(self, sel):
         ''' Returns name of computer '''
         
         # this applies if there are drivers found
         name = sel.xpath('//div[@class="gsd_subSectionHeading"]/text()').extract()
-        if not name: # otherwise, nothing was found, throw it out
+        # if we didn't find anything or we found an external hard drive, drop it
+        if not name or 'External' in name: 
             return 'drop'
         return 'Dell ' + name[0].encode('utf-8').strip()
     
@@ -75,27 +75,21 @@ class DellSpider(CrawlSpider):
             if 'Audio' in section or 'Video' in section or 'Network' in section or 'Chipset' in section:
                 wantedSections.append(i)
 
+        partsInfo = []
         parts = []
         # get the actual drivers that belong to the sections we want
         for i in wantedSections:
             # the div that contains a span with text "(Driver)" THIS IS TOO COOL
-            parts += sel.xpath('//div[@class="uif_ecContent gsd_bodyCopyMedium uif_ecCollapsed"][' 
-                + str(i+1) + ']//div[contains(span, "(Driver)")]/a[@id="DriverDetailslnk"]/text()').extract()
+            partsInfo.extend(sel.xpath('//div[@class="uif_ecContent gsd_bodyCopyMedium uif_ecCollapsed"][' 
+                + str(i+1) + ']//div[contains(span, "(Driver)")]/a[@id="DriverDetailslnk"]/text()').extract())
 
-        # clean up the name
-        for i, part in enumerate(parts):
-            if ", v" in part:
-                parts[i] = part[:part.find(", v")]
-            elif "for " in part:
-                parts[i] = part[part.find("for ") + 4:]
-            elif " driver" in part.lower():
-                parts[i] = part[:part.lower().find(" Driver")]
-            elif " Install" in part:
-                parts[i] = part[:part.find(" Install")]
-            elif " Software" in part:
-                parts[i] = part[:part.find(" Software")]
-            elif " Application" in part:
-                parts[i] = part[:part.find(" Application")]
+        for part in partsInfo:
+            part = self.cleanUp(part)
+            hardware, created = Hardware.objects.get_or_create(name=part)
+            if created:
+                hardware.source = 'Dell'
+                hardware.save()
+            parts.append(hardware)
 
         return parts
     
@@ -105,7 +99,7 @@ class DellSpider(CrawlSpider):
             them to the link to the drivers. '''
 
         sel = Selector(response)
-        baseURL = 'http://www.dell.com/'
+        baseURL = 'http://www.dell.com'
 
         links = sel.xpath('//div[@id="productFamiliesContainer"]/div/div/a/@href').extract()
 
@@ -113,3 +107,21 @@ class DellSpider(CrawlSpider):
         for link in links:
             link = link.replace("my-support", "drivers").replace("product-support/", "")
             yield Request(baseURL + link, callback=self.parse_computer)
+
+    def cleanUp(self, part):
+        ''' Clean up the name of the part '''
+
+        # remove funky unicode or weird stuff
+        part = part.replace('Driver', '').replace('Install', '').replace('Application', '')
+        part = part.replace('Installation', '').replace('Software', '').replace('driver', '')
+        part = part.replace('(R)', '').replace(u'\u2122', '').replace(u'\xae', '')
+
+        # remove driver information
+        if ", v" in part:
+            part = part[:part.find(", v")]
+        elif "for " in part:
+            part = part[part.find("for ") + 4:]
+
+        part = part.strip()
+
+        return part

@@ -1,4 +1,4 @@
-from scraper.models import Hardware, Computer, Processor
+from scraper.models import Hardware, Computer
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -8,7 +8,7 @@ class UbuntuSpider(CrawlSpider):
     name = "ubuntu_spider"
     allowed_domains = ['ubuntu.com']
     start_urls = [
-        # 'http://www.ubuntu.com/certification/catalog/makes/', # hardware catalog
+        'http://www.ubuntu.com/certification/catalog/makes/', # hardware catalog
         'http://www.ubuntu.com/certification/desktop/', # computers
     ]
     rules = [ # these are where the spider is allowed to crawl (including diff page #s of these pages)
@@ -28,15 +28,13 @@ class UbuntuSpider(CrawlSpider):
         if name == "None None": # because seriously, what the hell is None None
             return; 
 
-    	computersCertifiedIn = self.computersIn(sel, "certified")
-    	computersEnabledIn = self.computersIn(sel, "enabled")
+    	computersIn = self.computersIn(sel)
         source = 'Ubuntu'
 
         # make a hardware or update existing
         hardware, created = Hardware.objects.get_or_create(name=name, source=source)
         hardware.url = url
-        hardware.computersCertifiedIn = computersCertifiedIn
-        hardware.computersEnabledIn = computersEnabledIn
+        hardware.computersIn = computersIn
         hardware.save()
 
     def parse_computer(self, response):
@@ -59,11 +57,8 @@ class UbuntuSpider(CrawlSpider):
         computer.save()
 
         for part in parts:
-            if certified == "Certified" and computer not in part.computersCertifiedIn.all():
-                part.computersCertifiedIn.add(computer)
-                part.save()
-            elif certified == "Enabled" and computer not in part.computersEnabledIn.all():
-                part.computersEnabledIn.add(computer)
+            if computer not in part.computersIn.all():
+                part.computersIn.add(computer)
                 part.save()
 
     def getName(self, sel):
@@ -73,32 +68,32 @@ class UbuntuSpider(CrawlSpider):
 
         return self.cleanUp(name)
 
-    def computersIn(self, sel, model):
-        ''' Returns a list of certified/enabled computers for the part.
-        Make sure model is either "certified" or "enabled" depending on which list
-        of computers is needed.'''
+    def computersIn(self, sel):
+        ''' Returns a list of computers for the part.'''
 
         computerInfo = []
         computersList = []
         baseURL = 'http://www.ubuntu.com/'
         # computers is a list of computers with html
-        computers = sel.xpath("//li[@class='model " + model + "']/p").extract()
-        for text in computers:
+        computers = sel.xpath("//ul[@class='models']/li/p").extract()
+        certifications = sel.xpath("//ul[@class='models']/li/@class").extract()
+        for i, text in enumerate(computers):
             # format is <p> part1 <a href="..."/> part2 </a> part3 </p>
             part1 = text[text.find('p>') + 2 : text.find('<a')]
             part2 = text[text.find('">') + 2 : text.find('</a')]
             part3 = text[text.find('a>') + 2 : text.find('</p')]
             url =  baseURL + text[text.find('f="') + 3 : text.find('/">')]
+            certification = certifications[i][6:].title()
 
             # we don't care about servers
             if 'server' in part3 or 'Server' in part3:
-                computerInfo.append(((part1+part2+part3), url))
+                computerInfo.append(((part1+part2+part3), url, certification))
         
-        for (name, url) in computerInfo:
+        for (name, url, certification) in computerInfo:
             computer, created = Computer.objects.get_or_create(url=url, source='Ubuntu')
             if created:
                 computer.name = name
-                computer.certified = model.title() # we know what we're looking for
+                computer.certified = certification
                 computer.version = 'Unknown'
                 computer.save()
             computersList.append(computer)
@@ -146,13 +141,11 @@ class UbuntuSpider(CrawlSpider):
     def cleanUp(self, part):
         ''' Clean up the name of the part '''
 
-        # remove multiple whitespaces
-        part = ' '.join(part.split())
-
         # remove funky unicode or weird stuff
         part = part.replace('Intel(R) ', '').replace('[', '').replace(']', '')
         part = part.replace(' processor Graphics Controller', '').replace('(TM)', '')
         part = part.replace('AMD AMD', 'AMD').replace('(R)', '').replace('(tm)', '')
+        part = part.replace('\x2f', '/').replace('\x20', ' ')
 
         # try to make the processor name similar to Intel's
         if 'CPU' in part:
@@ -165,5 +158,8 @@ class UbuntuSpider(CrawlSpider):
             elif re.match('Intel Core i\d M \d{3} Processor', part):
                 part = part[:part.find('i') + 1] + '-' + part[part.find('M') + 2 : part.find('M') + 5] + 'M' + part[part.find('M') + 5 :]
 
+
+        # remove multiple whitespaces
+        part = ' '.join(part.split())
 
         return part

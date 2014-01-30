@@ -5,7 +5,7 @@
         <li>Version: {{ computer.version }}</li>
         <li>Parts:
         	<ul>
-        		{% for part in computer.getParts %}
+        		{% for part in computer.hardware_set.all %}
         			<li> <a href="{% url 'hardware' part.id %}">{{ part.name }}</a></li>
     			{% endfor %}
         	</ul>
