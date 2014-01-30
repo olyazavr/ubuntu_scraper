@@ -1,13 +1,14 @@
-from scraper.models import Hardware, Computer
+from scraper.models import Hardware, Computer, Processor
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
+import re
 
 class UbuntuSpider(CrawlSpider):
     name = "ubuntu_spider"
     allowed_domains = ['ubuntu.com']
     start_urls = [
-        'http://www.ubuntu.com/certification/catalog/makes/', # hardware catalog
+        # 'http://www.ubuntu.com/certification/catalog/makes/', # hardware catalog
         'http://www.ubuntu.com/certification/desktop/', # computers
     ]
     rules = [ # these are where the spider is allowed to crawl (including diff page #s of these pages)
@@ -68,7 +69,9 @@ class UbuntuSpider(CrawlSpider):
     def getName(self, sel):
         ''' Gets the name of the hardware/computer '''
 
-        return sel.xpath('//p[@class="large"]/strong/text()').extract()[0]
+        name = sel.xpath('//p[@class="large"]/strong/text()').extract()[0]
+
+        return self.cleanUp(name)
 
     def computersIn(self, sel, model):
         ''' Returns a list of certified/enabled computers for the part.
@@ -88,7 +91,7 @@ class UbuntuSpider(CrawlSpider):
             url =  baseURL + text[text.find('f="') + 3 : text.find('/">')]
 
             # we don't care about servers
-            if part3 != " Server":
+            if 'server' in part3 or 'Server' in part3:
                 computerInfo.append(((part1+part2+part3), url))
         
         for (name, url) in computerInfo:
@@ -114,13 +117,53 @@ class UbuntuSpider(CrawlSpider):
         return sel.xpath('//div[@class="release"]/h3/text()').re("\d+.\d+.?\d*")[0]
 
     def getParts(self, sel):
-        ''' Gets the list of parts in this computer '''
+        ''' Gets the list of parts in this computer. We only care about processors,
+            video, and network '''
 
-        partsList =  sel.xpath('//div[@id="hardware-overview"]/dl/dd/text()').extract()
+        # find which parts we care about
+        allSections = sel.xpath('//div[@id="hardware-overview"]/dl/dt/text()').extract()
+        wantedSections = []
+        for i, section in enumerate(allSections):
+            if 'Processor' in section or 'Video' in section or 'Network' in section:
+                wantedSections.append(i)
+
+        # only get the parts we care about
         parts = []
-        for part in partsList:
-            hardware, created = Hardware.objects.get_or_create(name=part, source='Ubuntu')
-            if created:
-                hardware.save()
-            parts.append(hardware)
+        for i in wantedSections:
+            part = sel.xpath('//div[@id="hardware-overview"]/dl/dd/text()').extract()[i]
+
+            # make it look nice
+            part = self.cleanUp(part)
+
+            if 'Not Specified' not in part and 'Unknown' not in part: 
+                hardware, created = Hardware.objects.get_or_create(name=part, source='Ubuntu')
+                if created:
+                    hardware.save()
+                parts.append(hardware)
+
         return parts
+
+    def cleanUp(self, part):
+        ''' Clean up the name of the part '''
+
+        # remove multiple whitespaces
+        part = ' '.join(part.split())
+
+        # remove funky unicode or weird stuff
+        part = part.replace('Intel(R) ', '').replace('[', '').replace(']', '')
+        part = part.replace(' processor Graphics Controller', '').replace('(TM)', '')
+        part = part.replace('AMD AMD', 'AMD').replace('(R)', '').replace('(tm)', '')
+
+        # try to make the processor name similar to Intel's
+        if 'CPU' in part:
+            part = part.replace(' CPU', '')
+            part = part[: part.find('@')] + 'Processor'
+            # Intel Core i3 530 Processor should be i3-530
+            if re.match('Intel Core i\d \d{3} Processor', part):
+                part = part[:part.find('i') + 1] + '-' + part[part.find('i') + 3 :]
+            # Intel Core i3 M 330 Processor should be i3-330M
+            elif re.match('Intel Core i\d M \d{3} Processor', part):
+                part = part[:part.find('i') + 1] + '-' + part[part.find('M') + 2 : part.find('M') + 5] + 'M' + part[part.find('M') + 5 :]
+
+
+        return part

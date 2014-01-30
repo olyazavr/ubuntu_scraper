@@ -32,8 +32,7 @@ class ToshibaSpider(CrawlSpider):
         source = 'Toshiba'
 
         # make a computer or update existing
-        computer, created = Computer.objects.get_or_create(url=url, source=source)
-        computer.name=name
+        computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
         computer.certified = certified
         computer.version = version
         computer.parts = parts
@@ -92,7 +91,7 @@ class ToshibaSpider(CrawlSpider):
         parts = filter(lambda x: x.strip() and x not in unwanted, parts)
         # remove weird unicode to faciliate searching
         parts = map(lambda x: x.strip().replace(u'\xae', '').replace(u'\x99', '')
-                                    .replace(u'\u2122', ''), parts)
+                    .replace(u'\u2122', '').replace('NVIDIA', 'nVidia'), parts)
 
         return parts
 
