@@ -53,10 +53,16 @@ class DellSpider(CrawlSpider):
         
         # this applies if there are drivers found
         name = sel.xpath('//div[@class="gsd_subSectionHeading"]/text()').extract()
-        # if we didn't find anything or we found an external hard drive, drop it
-        if not name or 'External' in name: 
+        # if we didn't find anything or we found a weird external thing, drop it
+        if not name: 
             return 'drop'
-        return 'Dell ' + name[0].encode('utf-8').strip()
+
+        name = name[0].strip()
+
+        if 'External' in name: 
+            return 'drop'
+
+        return 'Dell ' + name
     
     def getParts(self, sel):
         ''' Get audio, video, chipset, and network parts from the drivers list. 
@@ -75,16 +81,22 @@ class DellSpider(CrawlSpider):
             if 'Audio' in section or 'Video' in section or 'Network' in section or 'Chipset' in section:
                 wantedSections.append(i)
 
-        partsInfo = []
+        partsParsed = []
+        partNames = []
         parts = []
         # get the actual drivers that belong to the sections we want
         for i in wantedSections:
             # the div that contains a span with text "(Driver)" THIS IS TOO COOL
-            partsInfo.extend(sel.xpath('//div[@class="uif_ecContent gsd_bodyCopyMedium uif_ecCollapsed"][' 
+            partsParsed.extend(sel.xpath('//div[@class="uif_ecContent gsd_bodyCopyMedium uif_ecCollapsed"][' 
                 + str(i+1) + ']//div[contains(span, "(Driver)")]/a[@id="DriverDetailslnk"]/text()').extract())
 
-        for part in partsInfo:
-            part = self.cleanUp(part)
+        # clean up and split the parts
+        for part in partsParsed:
+            # ignore windows, not sure why this is in here to start with
+            if part != 'Windows 7, 8 & 8.1 64bit Operating Systems':
+                partNames.extend(self.cleanUp(part))
+
+        for part in partNames:
             hardware, created = Hardware.objects.get_or_create(name=part)
             if created:
                 hardware.source = 'Dell'
@@ -109,7 +121,8 @@ class DellSpider(CrawlSpider):
             yield Request(baseURL + link, callback=self.parse_computer)
 
     def cleanUp(self, part):
-        ''' Clean up the name of the part '''
+        ''' Clean up the name of the part, return a list of 1 or more
+            parts (frequently input is a bunch of comma separated parts) '''
 
         # remove funky unicode or weird stuff
         part = part.replace('Driver', '').replace('Install', '').replace('Application', '')
@@ -121,7 +134,22 @@ class DellSpider(CrawlSpider):
             part = part[:part.find(", v")]
         elif "for " in part:
             part = part[part.find("for ") + 4:]
+        if "(except" in part:
+            part = part[:part.find("(except")]
+        elif "supporting" in part:
+            part = part[:part.find("supporting")]
+        elif "(Consumer" in part:
+            part = part[:part.find("(Consumer")]
 
         part = part.strip()
 
-        return part
+        # for some reason, parts are often multiple comma separated parts
+        multParts = part.split(', ')
+
+        # however, sometimes it was actually meant to be a list 
+        # ie. Intel Centrino Advanced-N 2230, GT620, GT625
+        if len(multParts) > 1:
+            if ' ' not in multParts[1]:
+                multParts = [part]
+
+        return multParts
