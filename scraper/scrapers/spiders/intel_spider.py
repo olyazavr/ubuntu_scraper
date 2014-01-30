@@ -49,8 +49,9 @@ class IntelSpider(BaseSpider):
         if len(names) != 2 * numProcessors:
             # if this isn't the case, the processor is prehistoric, drop it
            return 'drop'
-        
-        return names[2 * i].strip()
+
+        # replace the strange unicode things to facilitate seraching
+        return names[2 * i].strip().replace(u'\xae', '').replace(u'\N{TRADE MARK SIGN}', '')
 
     def getCodename(self, sel):
         ''' Finds the codename of the current page of processors '''
@@ -64,7 +65,7 @@ class IntelSpider(BaseSpider):
 
         graphics = sel.xpath(xpath + '/td[8]/text()').extract()
         if graphics:
-            return graphics[i].strip()
+            return graphics[i].strip().replace(u'\xae', '').replace(u'\N{TRADE MARK SIGN}', '')
         return ''
 
     def parse(self, response):

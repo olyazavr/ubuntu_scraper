@@ -1,4 +1,4 @@
-from scraper.models import Computer
+from scraper.models import Computer, Processor
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
@@ -25,41 +25,55 @@ class ToshibaSpider(CrawlSpider):
 
         # make a computer item and populate its fields
         url = response.url
-        name = self.getName(sel).encode('utf-8')
+        name = self.getName(sel)
         certified = 'Unknown'
         version = 'Unknown'
         parts = self.getParts(sel)
         source = 'Toshiba'
 
-        print url
-        print parts
-        print '\n'
-
         # make a computer or update existing
-        # computer, created = Computer.objects.get_or_create(url=url, name=name, source=source)
-        # computer.certified = certified
-        # computer.version = version
-        # computer.parts = parts
-        # computer.save()
+        computer, created = Computer.objects.get_or_create(url=url, source=source)
+        computer.name=name
+        computer.certified = certified
+        computer.version = version
+        computer.parts = parts
+        computer.save()
 
     def getName(self, sel):
         ''' Returns name of computer '''
 
-        return 'Toshiba ' + sel.xpath('//div[@id="Hero-Intro"]/h1/text()').extract()[0]
+        name = sel.xpath('//div[@id="Hero-Intro"]/h1/text()').extract()[0]
+        # remove funky unicode to facilitate searching
+        name = name.replace(u'\N{TRADE MARK SIGN}', '').replace(u'\xe9', '').replace(u'\xae', '')
+        return 'Toshiba ' + name
 
     def getParts(self, sel):
         ''' Get all the possible parts we care about (video, audio, 
-            network, chipset/graphics) '''
+            network, graphics) '''
 
-        parts = []
-        # processor
-        parts.extend(self.getPart(sel, "Performance", "ProcessorCentralProcessingUnit"))
-        # chipset
-        parts.extend(self.getPart(sel, "Performance", "GraphicsGraphicsProcessingUnit"))
-        # wireless
-        parts.extend(self.getPart(sel, "Communication", "Wireless"))
+        processors = self.getPart(sel, "Performance", "ProcessorCentralProcessingUnit")
+        graphics = self.getPart(sel, "Performance", "GraphicsGraphicsProcessingUnit")
+        wireless = self.getPart(sel, "Communication", "Wireless")
 
-        return parts
+        # get rid of GHz in processors
+        for i in xrange(len(processors)):
+            if ', (' in processors[i]:
+                processors[i] = processors[i][:processors[i].find(", (")] 
+            elif ' (' in processors[i]:
+                processors[i] = processors[i][:processors[i].find(" (")] 
+            elif 'processor' in processors[i]: # this makes me angry
+                processors[i] = processors[i].replace('processor', 'Processor')
+
+        # intel HD graphics is not useful, find the graphics via processors
+        if 'Mobile Intel HD Graphics' in graphics:
+            for proc in processors:
+                try:
+                    graphics.append(Processor.objects.filter(name=proc)[0].graphics)
+                    graphics.remove('Mobile Intel HD Graphics')
+                except:
+                    pass # ):
+
+        return processors + graphics + wireless
 
     def getPart(self, sel, divisionName, javascriptTag):
         ''' Gets all the parts from the specified division, that start with the
@@ -76,6 +90,10 @@ class ToshibaSpider(CrawlSpider):
         # clean up
         unwanted = ['*', 'Choose from:', u'\xab', 'current selection']
         parts = filter(lambda x: x.strip() and x not in unwanted, parts)
+        # remove weird unicode to faciliate searching
+        parts = map(lambda x: x.strip().replace(u'\xae', '').replace(u'\x99', '')
+                                    .replace(u'\u2122', ''), parts)
+
         return parts
 
     def get_specs(self, response):
