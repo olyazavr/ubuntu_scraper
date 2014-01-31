@@ -3,6 +3,7 @@
 <ul>
         <li>Certification: {{ computer.certified }}</li>
         <li>Version: {{ computer.version }}</li>
+        <li>Source: {{ computer.source }}</li>
         <li>Parts:
         	<ul>
         		{% for part in computer.hardware_set.all %}
