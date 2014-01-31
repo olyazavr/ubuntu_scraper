@@ -43,6 +43,11 @@ class UbuntuSpider(CrawlSpider):
         # make a computer item and populate its fields
         url = response.url
         name = self.getName(sel)
+
+        # if it's a computer pretending to be hardware, discard it
+        if name == 'drop':
+            return
+
         certified = self.getCertification(sel)
         version = self.getVersion(sel)
         parts = self.getParts(sel)
@@ -65,6 +70,12 @@ class UbuntuSpider(CrawlSpider):
         ''' Gets the name of the hardware/computer '''
 
         name = sel.xpath('//p[@class="large"]/strong/text()').extract()[0]
+        category = sel.xpath('//p[@class="large"]/strong/text()').extract()[1]
+
+        # if it's a "system" it's just a computer trying to be a hardware piece.
+        # drop that shit.
+        if category == 'System':
+            return 'drop'
 
         return self.cleanUp(name)
 
@@ -86,7 +97,7 @@ class UbuntuSpider(CrawlSpider):
             certification = certifications[i][6:].title()
 
             # we don't care about servers
-            if 'server' in part3 or 'Server' in part3:
+            if 'server' not in part3 and 'Server' not in part3:
                 computerInfo.append(((part1+part2+part3), url, certification))
         
         for (name, url, certification) in computerInfo:
