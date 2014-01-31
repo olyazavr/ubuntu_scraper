@@ -2,7 +2,7 @@ from django.db import models
 
 class Computer(models.Model):
     url = models.URLField(unique=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
     certified = models.CharField(max_length=200)
     version = models.CharField(max_length=200)
     source = models.CharField(max_length=200)
@@ -19,7 +19,7 @@ class Computer(models.Model):
 
 class Hardware(models.Model):
     url = models.URLField(null=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
     computersIn = models.ManyToManyField(Computer)
     source = models.CharField(max_length=200)
 
@@ -55,7 +55,7 @@ class Hardware(models.Model):
 
 class Processor(models.Model):
     url = models.URLField(unique=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=500)
     codename = models.CharField(max_length=200)
     graphics = models.CharField(max_length=200, null=True)
     source = models.CharField(max_length=200)
