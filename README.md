@@ -11,7 +11,8 @@ Certified means Ubuntu will definitely run. Enabled signifies Ubuntu will run on
 4. install south with pip
 5. install Postgresql
 
-##To run a spider: ```$ scrapy crawl <spider_name>```
+##To run a spider: 
+```$ scrapy crawl <spider_name>```
 
 ##Spiders:
 1. intel_spider (must be run before toshiba_spider)
